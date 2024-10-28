@@ -32,6 +32,8 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.Asset;
 import io.cdap.plugin.common.LineageRecorder;
+import io.cdap.plugin.common.ReferenceBatchSource;
+import io.cdap.plugin.common.ReferencePluginConfig;
 import io.cdap.plugin.common.SourceInputFormatProvider;
 import io.cdap.plugin.format.DBTableInfo;
 import io.cdap.plugin.format.MultiSQLStatementInputFormat;
@@ -63,7 +65,7 @@ import java.util.stream.Collectors;
 @Description("Reads from multiple tables in a relational database. " +
   "Outputs one record for each row in each table, with the table name as a record field. " +
   "Also sets a pipeline argument for each table read, which contains the table schema. ")
-public class MultiTableDBSource extends BatchSource<NullWritable, RecordWrapper, StructuredRecord> {
+public class MultiTableDBSource extends ReferenceBatchSource<NullWritable, RecordWrapper, StructuredRecord> {
   private static final Logger LOG = LoggerFactory.getLogger(MultiTableDBSource.class);
 
   private static final String JDBC_PLUGIN_ID = "jdbc.driver";
@@ -71,11 +73,13 @@ public class MultiTableDBSource extends BatchSource<NullWritable, RecordWrapper,
   private final MultiTableConf conf;
 
   public MultiTableDBSource(MultiTableConf conf) {
+    super(new ReferencePluginConfig(conf.getReferenceName()));
     this.conf = conf;
   }
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    super.configurePipeline(pipelineConfigurer);
     Class<? extends Driver> jdbcDriverClass = pipelineConfigurer.usePluginClass("jdbc", conf.getJdbcPluginName(),
                                                                                 JDBC_PLUGIN_ID,
                                                                                 PluginProperties.builder().build());
