@@ -27,10 +27,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cdap.version>6.8.0-SNAPSHOT</cdap.version>
+    <cdap.version>6.8.0</cdap.version>
     <hadoop.version>2.10.2</hadoop.version>
     <hsql.version>2.2.4</hsql.version>
-    <hydrator.version>2.11.0-SNAPSHOT</hydrator.version>
+    <hydrator.version>2.11.0</hydrator.version>
     <!-- properties for script build step that creates the config files for the artifacts -->
     <widgets.dir>widgets</widgets.dir>
     <docs.dir>docs</docs.dir>
