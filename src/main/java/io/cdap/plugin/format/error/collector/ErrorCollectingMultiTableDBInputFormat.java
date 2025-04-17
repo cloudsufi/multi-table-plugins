@@ -57,6 +57,9 @@ public class ErrorCollectingMultiTableDBInputFormat extends InputFormat<NullWrit
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
     try {
+      LOG.info("Creating splits for MultiTableDBInputFormat");
+      // log delegate class name
+      LOG.info("Delegate class name: {}", delegate.getClass().getName());
       return delegate.getSplits(context);
     } catch (IOException | InterruptedException e) {
       // If there was an exception creating the splits, we create a single ErrorEmittingInputSplit in order to

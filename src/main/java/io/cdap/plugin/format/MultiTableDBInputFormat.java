@@ -16,10 +16,10 @@
 
 package io.cdap.plugin.format;
 
-import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.plugin.DriverCleanup;
 import io.cdap.plugin.Drivers;
+import jdk.jpackage.internal.Log;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.InputFormat;
@@ -72,34 +72,58 @@ public class MultiTableDBInputFormat extends InputFormat<NullWritable, RecordWra
   public static Collection<DBTableInfo> setInput(Configuration hConf, MultiTableConf dbConf,
                                                  Class<? extends Driver> driverClass) throws SQLException,
     InstantiationException, IllegalAccessException {
-
+    LOG.info("Setting up input format for tables in database");
     MultiTableDBConfiguration multiTableDBConf = new MultiTableDBConfiguration(hConf);
+    LOG.info(
+      "Setting up input format for tables in database with connection string {} and driver class {}",
+      dbConf.getConnectionString(), driverClass.getName()
+    );
     multiTableDBConf.setPluginConfiguration(dbConf);
+    LOG.info(
+        "Setting up input format for tables in database with connection string {} and driver class {}",
+        dbConf.getConnectionString(), driverClass.getName()
+    );
     multiTableDBConf.setDriver(driverClass.getName());
+    LOG.info("Driver class name: {}", driverClass.getName());
 
     DriverCleanup cleanup = Drivers.ensureJDBCDriverIsAvailable(driverClass, dbConf.getConnectionString());
 
     try (Connection connection = dbConf.getConnection()) {
+      LOG.info("Connection to database established, getting metadata");
       DatabaseMetaData dbMeta = connection.getMetaData();
       ResultSet tables = dbMeta.getTables(null, dbConf.getSchemaNamePattern(), dbConf.getTableNamePattern(),
                                           new String[]{"TABLE", "TABLE_SCHEM"});
+      LOG.info("Got metadata for tables");
+      // size log
+      LOG.info("Number of tables found: {}", tables.getFetchSize());
+      // log the result set as string table
       List<DBTableInfo> tableInfos = new ArrayList<>();
       List<String> whiteList = dbConf.getWhiteList();
       List<String> blackList = dbConf.getBlackList();
+      // log
+      LOG.info("Whitelist: {}", whiteList);
+      LOG.info("Blacklist: {}", blackList);
       while (tables.next()) {
+        String tableCat = tables.getString("TABLE_CAT");
+        String tableSchema = tables.getString("TABLE_SCHEM");
+        String tableType = tables.getString("TABLE_TYPE");
+        LOG.info("Table cat: {}, table schema: {}, table type: {}", tableCat, tableSchema, tableType);
         String tableName = tables.getString("TABLE_NAME");
         // this is required for oracle apparently? Don't know why
         String db = tables.getString("TABLE_SCHEM");
         DBTableName dbTableName = new DBTableName(db, tableName);
         // If the table name exists in blacklist or when the whiteList is not empty and does not contain table name
         // the table should not be read
+        LOG.info("Checking table {} against whitelist {} and blacklist {}", tableName, whiteList, blackList);
         if (!blackList.contains(tableName) && (whiteList.isEmpty() || whiteList.contains(tableName))) {
+          LOG.info("Adding table {} to the list of tables to be read", tableName);
           List<String> primaryColumns = getPrimaryColumns(dbConf.getSchemaNamePattern(), tableName, dbMeta);
           Schema schema = getTableSchema(dbTableName.fullTableName(), connection);
           tableInfos.add(new DBTableInfo(dbTableName, schema, primaryColumns));
         }
       }
       multiTableDBConf.setTableInfos(tableInfos);
+      LOG.info("Found {} tables to read from.", tableInfos.size());
       return tableInfos;
     } finally {
       cleanup.destroy();
@@ -180,7 +204,7 @@ public class MultiTableDBInputFormat extends InputFormat<NullWritable, RecordWra
         this.connection = null;
       }
     } catch (SQLException sqlE) {
-      LOG.debug("Exception on close", sqlE);
+      LOG.info("Exception on close", sqlE);
     } finally {
       if (driverCleanup != null) {
         driverCleanup.destroy();

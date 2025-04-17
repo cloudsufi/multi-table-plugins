@@ -69,19 +69,19 @@ public final class Drivers {
       driverField.setAccessible(true);
       Driver d = (Driver) driverField.get(driverInfo);
       if (d == null) {
-        LOG.debug("Found null driver object in drivers list. Ignoring.");
+        LOG.info("Found null driver object in drivers list. Ignoring.");
         continue;
       }
-      LOG.debug("Removing non-null driver object from drivers list.");
+      LOG.info("Removing non-null driver object from drivers list.");
       ClassLoader registeredDriverClassLoader = d.getClass().getClassLoader();
       if (registeredDriverClassLoader == null) {
-        LOG.debug("Found null classloader for default driver {}. Ignoring since this may be using system classloader.",
+        LOG.info("Found null classloader for default driver {}. Ignoring since this may be using system classloader.",
                   d.getClass().getName());
         continue;
       }
       // Remove all objects in this list that were created using the classloader of the caller.
       if (d.getClass().getClassLoader().equals(driverClass.getClassLoader())) {
-        LOG.debug("Removing default driver {} from registeredDrivers", d.getClass().getName());
+        LOG.info("Removing default driver {} from registeredDrivers", d.getClass().getName());
         list.remove(driverInfo);
       }
     }

@@ -95,15 +95,20 @@ public class MultiTableDBSource extends ReferenceBatchSource<NullWritable, Recor
 
   @Override
   public void prepareRun(BatchSourceContext context) throws Exception {
+    LOG.info("Preparing to run MultiTableDBSource with reference name: {}", conf.getReferenceName());
     Configuration hConf = new Configuration();
     Class<? extends Driver> driverClass = context.loadPluginClass(JDBC_PLUGIN_ID);
-
+    LOG.info("Loaded JDBC Driver class: {}", driverClass.getName());
     try {
       if (MultiTableConf.DATA_SELECTION_MODE_ALLOW_LIST.equals(conf.getDataSelectionMode())
         || MultiTableConf.DATA_SELECTION_MODE_BLOCK_LIST.equals(conf.getDataSelectionMode())) {
         //Proceed with Multi DB Input
+        LOG.info("Using MultiTableDBInputFormat for data selection mode: {}",
+                 conf.getDataSelectionMode());
         setContextForMultiTableDBInput(context, hConf, driverClass);
       } else {
+        LOG.info("Using MultiSQLStatementInputFormat for data selection mode: {}",
+                 conf.getDataSelectionMode());
         //Proceed with Multi SQL Statement Input
         setContextForMultiSQLStatementInput(context, hConf, driverClass);
       }
@@ -160,14 +165,16 @@ public class MultiTableDBSource extends ReferenceBatchSource<NullWritable, Recor
   public void setContextForMultiTableDBInput(BatchSourceContext context,
                                              Configuration hConf, Class<? extends Driver> driverClass)
     throws IllegalAccessException, SQLException, InstantiationException {
-
+    LOG.info("Setting context for MultiTableDBInputFormat");
     Collection<DBTableInfo> tables;
 
     tables = MultiTableDBInputFormat.setInput(hConf, conf, driverClass);
-
+    LOG.info("Found {} tables to read from.", tables.size());
     SettableArguments arguments = context.getArguments();
     for (DBTableInfo tableInfo : tables) {
       Schema schema = tableInfo.getSchema();
+      // log schema for each table
+      LOG.info("Table: {}, Schema: {}", tableInfo.getDbTableName().getTable(), schema);
       arguments.set(DynamicMultiFilesetSink.TABLE_PREFIX + tableInfo.getDbTableName().getTable(),
                     schema.toString());
       emitLineage(context, tableInfo, schema);

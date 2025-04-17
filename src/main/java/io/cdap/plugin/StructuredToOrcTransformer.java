@@ -62,7 +62,7 @@ public class StructuredToOrcTransformer extends AbstractStructuredRecordTransfor
         WritableComparable writable = convertToWritable(field, input);
         orcRecord.setFieldValue(field.getName(), writable);
       } catch (UnsupportedTypeException e) {
-        LOG.debug("{} is not a supported type", field.getName(), e);
+        LOG.info("{} is not a supported type", field.getName(), e);
         throw new IllegalArgumentException(String.format("%s is not a supported type", field.getName()), e);
       }
     }
