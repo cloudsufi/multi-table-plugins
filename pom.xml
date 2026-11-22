@@ -38,7 +38,7 @@
     <!-- this is here because project.basedir evaluates to null in the script build step -->
     <main.basedir>${project.basedir}</main.basedir>
     <commons.codec.version>1.6</commons.codec.version>
-    <avro.version>1.7.7</avro.version>
+    <avro.version>1.11.4</avro.version>
     <opentracingjdbc.version>0.2.15</opentracingjdbc.version>
   </properties>
 
